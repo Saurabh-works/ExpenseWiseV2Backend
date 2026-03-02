@@ -16,6 +16,8 @@ app.use(
 );
 
 app.use("/api/auth", require("./routes/auth"));
+app.use("/api/income", require("./routes/IncomeAndExpense"));
+app.use("/api/expense", require("./routes/IncomeAndExpense"));
 
 app.get("/", (req, res) => res.json({ ok: true, message: "Backend running" }));
 
