@@ -157,4 +157,114 @@ router.delete("/entry/:id", async (req, res) => {
   }
 });
 
+
+// uncomment below code if you want to upload file by postman
+
+// const multer = require("multer");
+// const csv = require("csvtojson");
+
+// // memory upload (no need to save file on disk)
+// const upload = multer({ storage: multer.memoryStorage() });
+
+// // ✅ CONSTANT USER (as you said)
+// const FIXED_USER = {
+//   userId: "744cf703-7459-45de-b14a-1f7fb17bdf6f",
+//   name: "Saurabh Shinde",
+//   email: "saurabhshindework@gmail.com",
+// };
+
+// // normalize date -> "YYYY-MM-DD"
+// function normalizeDate(d) {
+//   if (!d) return "";
+//   // already YYYY-MM-DD
+//   if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+
+//   const dt = new Date(d);
+//   if (Number.isNaN(dt.getTime())) return "";
+
+//   const yyyy = dt.getUTCFullYear();
+//   const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+//   const dd = String(dt.getUTCDate()).padStart(2, "0");
+//   return `${yyyy}-${mm}-${dd}`;
+// }
+
+// // CSV IMPORT: POST /api/income/import-csv or /api/expense/import-csv
+// router.post("/import-csv", upload.single("file"), async (req, res) => {
+//   try {
+//     const Model = getModel(req); // Income or Expense based on mount path
+
+//     if (!req.file) {
+//       return res.status(400).json({ ok: false, message: "CSV file is required (field name: file)" });
+//     }
+
+//     // parse CSV content
+//     const csvText = req.file.buffer.toString("utf8");
+//     const rows = await csv().fromString(csvText);
+
+//     if (!rows.length) {
+//       return res.status(400).json({ ok: false, message: "CSV is empty" });
+//     }
+
+//     // CSV columns expected:
+//     // date, category, description, amount
+//     // day optional (we can compute)
+//     //
+//     // NOTE: If your CSV has different headers, edit mapping below.
+//     const docs = rows.map((r) => {
+//       const date = normalizeDate(r.date || r.Date);
+//       const category = (r.category || r.Category || "Other").toString().trim();
+//       const description = (r.description || r.Description || "").toString().trim();
+//       const amount = Number(r.amount ?? r.Amount);
+
+//       const day = (r.day || r.Day || "").toString().trim() || getDayName(date);
+
+//       return {
+//         userId: FIXED_USER.userId,
+//         name: FIXED_USER.name,
+//         email: FIXED_USER.email,
+//         date,
+//         day,
+//         category,
+//         description,
+//         amount,
+//       };
+//     });
+
+//     // validate
+//     const validDocs = docs.filter(
+//       (d) =>
+//         d.date &&
+//         d.day &&
+//         d.category &&
+//         Number.isFinite(d.amount) &&
+//         d.amount >= 0
+//     );
+
+//     // insert in chunks
+//     const CHUNK = 500;
+//     let inserted = 0;
+
+//     for (let i = 0; i < validDocs.length; i += CHUNK) {
+//       const part = validDocs.slice(i, i + CHUNK);
+//       await Model.insertMany(part, { ordered: false });
+//       inserted += part.length;
+//     }
+
+//     return res.json({
+//       ok: true,
+//       message: "CSV import completed",
+//       data: {
+//         collection: Model.modelName,
+//         receivedRows: rows.length,
+//         importedRows: inserted,
+//         skippedRows: rows.length - inserted,
+//       },
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ ok: false, message: err.message || "Server error" });
+//   }
+// });
+
+
 module.exports = router;
