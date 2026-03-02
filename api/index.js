@@ -18,8 +18,8 @@ app.use(
 // routes
 app.use("/api/auth", authRoutes);
 app.get("/api/health", (req, res) => res.json({ ok: true }));
-app.use("/api/income", require("./routes/IncomeAndExpense"));
-app.use("/api/expense", require("./routes/IncomeAndExpense"));
+app.use("/api/income", require("../routes/IncomeAndExpense"));
+app.use("/api/expense", require("../routes/IncomeAndExpense"));
 
 // 🔹 IMPORTANT: connect once (Vercel-friendly)
 let isConnected = false;
