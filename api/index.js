@@ -15,12 +15,6 @@ app.use(
   })
 );
 
-// routes
-app.use("/api/auth", authRoutes);
-app.get("/api/health", (req, res) => res.json({ ok: true }));
-app.use("/api/income", require("../routes/IncomeAndExpense"));
-app.use("/api/expense", require("../routes/IncomeAndExpense"));
-
 // 🔹 IMPORTANT: connect once (Vercel-friendly)
 let isConnected = false;
 
@@ -40,6 +34,15 @@ app.use(async (req, res, next) => {
     res.status(500).json({ ok: false, message: "Database error" });
   }
 });
+
+// routes
+app.use("/api/auth", authRoutes);
+app.get("/api/health", (req, res) => res.json({ ok: true }));
+app.use("/api/income", require("../routes/IncomeAndExpense"));
+app.use("/api/expense", require("../routes/IncomeAndExpense"));
+app.get("/", (req, res) => res.json({ ok: true, message: "Backend running" }));
+
+
 
 // ❌ NO app.listen()
 module.exports = app;
