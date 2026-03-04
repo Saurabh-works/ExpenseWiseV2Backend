@@ -157,6 +157,9 @@ router.delete("/entry/:id", async (req, res) => {
   }
 });
 
+module.exports = router;
+
+
 
 // uncomment below code if you want to upload file by postman
 
@@ -265,6 +268,3 @@ router.delete("/entry/:id", async (req, res) => {
 //     return res.status(500).json({ ok: false, message: err.message || "Server error" });
 //   }
 // });
-
-
-module.exports = router;
