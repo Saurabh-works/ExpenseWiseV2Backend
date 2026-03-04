@@ -40,8 +40,8 @@ app.use("/api/auth", authRoutes);
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 app.use("/api/income", require("../routes/IncomeAndExpense"));
 app.use("/api/expense", require("../routes/IncomeAndExpense"));
-app.use("/api/report", require("./routes/Report"));
-app.use("/api/dashboard", require("./routes/Dashboard")); 
+app.use("/api/report", require("../routes/Report"));
+app.use("/api/dashboard", require("..IncomeAndExpense/routes/Dashboard")); 
 app.get("/", (req, res) => res.json({ ok: true, message: "Backend running" }));
 
 
