@@ -53,15 +53,28 @@ function getMonthRange(year, month) {
   return { start, endExclusive };
 }
 
+/**
+ * IMPORTANT: make backend categories match your frontend list
+ * so pie breakdown is consistent.
+ */
 const expenseCategories = [
   "Housing",
+  "Groceries",
   "Food",
-  "Transportation",
+  "Outside food",
+  "Fuel",
+  "Public Transport",
   "Bills",
   "Healthcare",
+  "Spend on other",
+  "Learning",
   "Personal Care",
   "Entertainment",
   "Shopping",
+  "Gifts & Donations",
+  "Investments",
+  "Loan / EMI",
+  "Savings",
   "Other",
 ];
 
@@ -91,7 +104,6 @@ router.get("/recent", async (req, res) => {
     ];
 
     merged.sort((a, b) => {
-      // date is YYYY-MM-DD so string compare works, then createdAt tie-break
       if (a.date !== b.date) return b.date.localeCompare(a.date);
       const at = new Date(a.createdAt).getTime();
       const bt = new Date(b.createdAt).getTime();
@@ -119,8 +131,6 @@ router.get("/expense-by-month", async (req, res) => {
       return res.status(400).json({ ok: false, message: "Invalid year" });
     }
 
-    // Aggregate by month from date string "YYYY-MM-DD"
-    // month = substr(date, 5, 2)
     const rows = await Expense.aggregate([
       { $match: { userId: decoded.userId, date: { $gte: `${year}-01-01`, $lt: `${year + 1}-01-01` } } },
       {
@@ -164,10 +174,11 @@ router.get("/expense-by-category", async (req, res) => {
 
     const totalsByCat = {};
     expenseCategories.forEach((c) => (totalsByCat[c] = 0));
+
     rows.forEach((r) => {
       const key = r._id;
-      if (typeof totalsByCat[key] === "number") totalsByCat[key] = r.total;
-      else totalsByCat[key] = r.total; // if some unexpected category exists, include it
+      // Keep backend flexible if a "new" category appears
+      totalsByCat[key] = r.total;
     });
 
     return res.json({ ok: true, data: totalsByCat });
@@ -180,8 +191,7 @@ router.get("/expense-by-category", async (req, res) => {
 
 /**
  * GET /api/dashboard/totals?year=2026
- * Returns total income amount + total expense amount for that year
- * Also includes record counts.
+ * (kept for compatibility) total income+expense for the YEAR
  */
 router.get("/totals", async (req, res) => {
   try {
@@ -194,7 +204,6 @@ router.get("/totals", async (req, res) => {
 
     const start = `${year}-01-01`;
     const endExclusive = `${year + 1}-01-01`;
-
     const match = { userId: decoded.userId, date: { $gte: start, $lt: endExclusive } };
 
     const [incomeAgg, expenseAgg, incomeCount, expenseCount] = await Promise.all([
@@ -204,15 +213,50 @@ router.get("/totals", async (req, res) => {
       Expense.countDocuments(match),
     ]);
 
-    const totalIncome = incomeAgg?.[0]?.total || 0;
-    const totalExpense = expenseAgg?.[0]?.total || 0;
-
     return res.json({
       ok: true,
       data: {
         year,
-        totalIncome,
-        totalExpense,
+        totalIncome: incomeAgg?.[0]?.total || 0,
+        totalExpense: expenseAgg?.[0]?.total || 0,
+        incomeCount,
+        expenseCount,
+      },
+    });
+  } catch (err) {
+    const status = err.status || 500;
+    console.error(err);
+    return res.status(status).json({ ok: false, message: err.message || "Server error" });
+  }
+});
+
+/**
+ * ✅ NEW
+ * GET /api/dashboard/totals-by-month?year=2026&month=3
+ * Returns totals ONLY for that month (income + expense + counts)
+ */
+router.get("/totals-by-month", async (req, res) => {
+  try {
+    const decoded = requireAuth(req);
+    const { year, month } = req.query;
+
+    const { start, endExclusive } = getMonthRange(year, month);
+    const match = { userId: decoded.userId, date: { $gte: start, $lt: endExclusive } };
+
+    const [incomeAgg, expenseAgg, incomeCount, expenseCount] = await Promise.all([
+      Income.aggregate([{ $match: match }, { $group: { _id: null, total: { $sum: "$amount" } } }]),
+      Expense.aggregate([{ $match: match }, { $group: { _id: null, total: { $sum: "$amount" } } }]),
+      Income.countDocuments(match),
+      Expense.countDocuments(match),
+    ]);
+
+    return res.json({
+      ok: true,
+      data: {
+        year: Number(year),
+        month: Number(month),
+        totalIncome: incomeAgg?.[0]?.total || 0,
+        totalExpense: expenseAgg?.[0]?.total || 0,
         incomeCount,
         expenseCount,
       },
